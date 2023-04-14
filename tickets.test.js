@@ -1,4 +1,4 @@
-const {  
+const {
   getColorForSelector,
   getPrice,
   getText,
@@ -37,6 +37,7 @@ describe("Booking tickets on weekend", () => {
   let time;
   let seanceSelector;
   let actualButtonStatus;
+  let seatSelector;
 
   test("Choice day, film and time and check buying info", async () => {
     film = "Фильм 3";
@@ -69,23 +70,18 @@ describe("Booking tickets on weekend", () => {
   });
 
   test("Select seats, check ticket and finish booking", async () => {
-    /* Test failed by check price with this data */
-    film = "Фильм 3";
-    hall = "data.newHall";
-    time = "10:00";
-    /* Test passed with this data */
-    // film = "Train arrival";
-    // hall = "SuperHall";
-    // time = "21:00";
+    film = "Train arrival";
+    hall = "SuperHall";
+    time = "21:00";
     seanceSelector = await page.$x(generateSeanceSelector(film, hall, time));
     seanceSelector[0].click();
     await page.waitForSelector("div.buying__info-description");
-    
+
     const row = generateRow();
     const seat = generateSeat();
-    const seatSelector = generateSeatSelector(row, seat);
+    seatSelector = generateSeatSelector(row, seat);
     const price = getPrice(await getColorForSelector(page, seatSelector));
-    const getSeatSelector = await page.$(seatSelector);    
+    const getSeatSelector = await page.$(seatSelector);
     getSeatSelector.click();
     await page.waitForXPath(
       '//div[@class="buying-scheme__wrapper"]//span[contains(@class,"buying-scheme__chair_selected")]'
@@ -102,7 +98,7 @@ describe("Booking tickets on weekend", () => {
     expect(inHall).toEqual(hall);
     const start = await getText(page, "span.ticket__start");
     expect(start).toEqual(time);
-    const cost = await getText(page, "span.ticket__cost")
+    const cost = await getText(page, "span.ticket__cost");
     expect(parseInt(cost)).toEqual(price);
     const acceptingButton = await page.$("button");
     acceptingButton.click();
@@ -111,5 +107,18 @@ describe("Booking tickets on weekend", () => {
     expect(hint).toEqual(
       "Покажите QR-код нашему контроллеру для подтверждения бронирования."
     );
+  });
+
+  test("Try booking tickets for same seat, that booked in previous test", async () => {
+    film = "Train arrival";
+    hall = "SuperHall";
+    time = "21:00";
+    seanceSelector = await page.$x(generateSeanceSelector(film, hall, time));
+    seanceSelector[0].click();
+    await page.waitForSelector("div.buying__info-description");   
+    const getSeatSelector = await page.$(seatSelector);
+    getSeatSelector.click();
+    actualButtonStatus = await getActualButtonStatus(page, "button");
+    expect(actualButtonStatus).toEqual("true");
   });
 });
